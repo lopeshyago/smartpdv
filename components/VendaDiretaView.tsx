@@ -10,7 +10,7 @@ export default function VendaDiretaView() {
 
   const filteredProducts = products.filter(p => 
     p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.category.toLowerCase().includes(searchTerm.toLowerCase())
+    (p.category && p.category.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const addToCart = (product: Product) => {
@@ -40,10 +40,6 @@ export default function VendaDiretaView() {
     });
   };
 
-  const removeAllFromCart = (productId: string) => {
-    setCart(prev => prev.filter(item => item.productId !== productId));
-  };
-
   const cartTotal = cart.reduce((acc, curr) => acc + (Number(curr.priceAtTime) * curr.quantity), 0);
 
   const finishSale = async (method: PaymentMethod) => {
@@ -66,7 +62,7 @@ export default function VendaDiretaView() {
           <i className="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
           <input
             type="text"
-            placeholder="Buscar produto ou categoria..."
+            placeholder="Buscar produto..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm"
@@ -79,21 +75,28 @@ export default function VendaDiretaView() {
           <button
             key={prod.id}
             onClick={() => addToCart(prod)}
-            className="bg-white p-2 rounded-2xl border border-slate-100 shadow-sm active:scale-95 transition-transform text-left flex flex-col h-full"
+            className="bg-white p-2 rounded-2xl border border-slate-100 shadow-sm active:scale-95 transition-transform text-left flex flex-col h-full overflow-hidden"
           >
-            <img src={prod.image} alt={prod.name} className="w-full aspect-square object-cover rounded-xl mb-2" />
-            <h4 className="font-bold text-sm truncate w-full">{prod.name}</h4>
-            <p className="text-indigo-600 font-black mt-auto">R$ {Number(prod.price).toFixed(2)}</p>
+            <img 
+              src={prod.image} 
+              alt={prod.name} 
+              className="w-full aspect-square object-cover rounded-xl mb-2 bg-slate-50" 
+              onError={(e) => (e.currentTarget.src = 'https://via.placeholder.com/150?text=Produto')}
+            />
+            <div className="px-1 flex-1 flex flex-col justify-between">
+              <h4 className="font-bold text-sm text-slate-800 line-clamp-2 leading-tight">{prod.name}</h4>
+              <p className="text-indigo-600 font-black mt-1">R$ {Number(prod.price).toFixed(2)}</p>
+            </div>
           </button>
         ))}
       </div>
 
       {cart.length > 0 && (
-        <div className="fixed bottom-16 left-0 right-0 p-4 bg-white border-t border-slate-200 shadow-[0_-4px_15px_rgba(0,0,0,0.05)] z-40">
+        <div className="fixed bottom-16 left-0 right-0 p-4 bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-[0_-8px_30px_rgba(0,0,0,0.08)] z-40">
           <div className="max-w-4xl mx-auto">
             <div className="flex justify-between items-center mb-4">
               <div className="flex flex-col">
-                <span className="text-xs text-slate-500 font-bold uppercase tracking-widest">Carrinho ({cart.reduce((a, b) => a + b.quantity, 0)})</span>
+                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Subtotal ({cart.reduce((a, b) => a + b.quantity, 0)} itens)</span>
                 <span className="text-2xl font-black text-indigo-600">R$ {cartTotal.toFixed(2)}</span>
               </div>
               <button 
@@ -108,15 +111,17 @@ export default function VendaDiretaView() {
               {cart.map(item => {
                 const p = products.find(prod => prod.id === item.productId);
                 return (
-                  <div key={item.productId} className="flex-shrink-0 bg-slate-50 px-3 py-2 rounded-xl flex items-center gap-2 border border-slate-200">
-                    <button onClick={() => removeFromCart(item.productId)} className="w-6 h-6 rounded-full bg-white border flex items-center justify-center text-rose-500 active:bg-rose-50">
-                      <i className="fa-solid fa-minus text-[10px]"></i>
-                    </button>
-                    <span className="font-black text-indigo-600 text-sm">{item.quantity}x</span>
-                    <span className="text-sm font-medium whitespace-nowrap">{p?.name}</span>
-                    <button onClick={() => removeAllFromCart(item.productId)} className="text-slate-300 ml-1 hover:text-rose-500">
-                      <i className="fa-solid fa-xmark"></i>
-                    </button>
+                  <div key={item.productId} className="flex-shrink-0 bg-slate-50 px-3 py-2 rounded-xl flex items-center gap-3 border border-slate-200">
+                    <div className="flex items-center gap-1.5">
+                      <button onClick={() => removeFromCart(item.productId)} className="w-6 h-6 rounded-full bg-white border border-slate-200 flex items-center justify-center text-rose-500 active:bg-rose-50">
+                        <i className="fa-solid fa-minus text-[8px]"></i>
+                      </button>
+                      <span className="font-black text-indigo-600 text-sm w-4 text-center">{item.quantity}</span>
+                      <button onClick={() => p && addToCart(p)} className="w-6 h-6 rounded-full bg-white border border-slate-200 flex items-center justify-center text-emerald-500 active:bg-emerald-50">
+                        <i className="fa-solid fa-plus text-[8px]"></i>
+                      </button>
+                    </div>
+                    <span className="text-sm font-semibold text-slate-700 whitespace-nowrap">{p?.name}</span>
                   </div>
                 );
               })}
@@ -126,22 +131,17 @@ export default function VendaDiretaView() {
       )}
 
       {isCheckoutOpen && (
-        <div className="fixed inset-0 z-[110] bg-black/60 flex items-end">
-          <div className="w-full bg-white rounded-t-[32px] p-6 animate-in slide-in-from-bottom duration-300">
+        <div className="fixed inset-0 z-[110] bg-black/60 flex items-end backdrop-blur-sm">
+          <div className="w-full bg-white rounded-t-[32px] p-6 animate-in slide-in-from-bottom duration-300 shadow-2xl">
             <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-6"></div>
             <h3 className="text-xl font-bold text-center mb-2">Finalizar Venda</h3>
             <p className="text-center text-slate-500 mb-6 text-sm">Total: <span className="font-bold text-indigo-600">R$ {cartTotal.toFixed(2)}</span></p>
             <div className="grid grid-cols-1 gap-3 mb-6">
-              <PaymentOption icon="fa-qrcode" label="Pix" onClick={() => finishSale('Pix')} />
-              <PaymentOption icon="fa-credit-card" label="Card" onClick={() => finishSale('Cartão')} />
-              <PaymentOption icon="fa-money-bill-wave" label="Cash" onClick={() => finishSale('Dinheiro')} />
+              <PaymentOption icon="fa-qrcode" label="Pix" onClick={() => finishSale('Pix')} color="bg-emerald-50 text-emerald-600" />
+              <PaymentOption icon="fa-credit-card" label="Cartão de Débito/Crédito" onClick={() => finishSale('Cartão')} color="bg-indigo-50 text-indigo-600" />
+              <PaymentOption icon="fa-money-bill-wave" label="Dinheiro" onClick={() => finishSale('Dinheiro')} color="bg-amber-50 text-amber-600" />
             </div>
-            <button 
-              onClick={() => setIsCheckoutOpen(false)}
-              className="w-full text-slate-500 font-bold py-2"
-            >
-              Voltar ao carrinho
-            </button>
+            <button onClick={() => setIsCheckoutOpen(false)} className="w-full text-slate-400 font-bold py-2 active:text-slate-600">Voltar ao carrinho</button>
           </div>
         </div>
       )}
@@ -149,10 +149,10 @@ export default function VendaDiretaView() {
   );
 }
 
-function PaymentOption({ icon, label, onClick }: { icon: string, label: string, onClick: () => void }) {
+function PaymentOption({ icon, label, onClick, color }: { icon: string, label: string, onClick: () => void, color: string }) {
   return (
-    <button onClick={onClick} className="flex items-center gap-4 p-4 border border-slate-200 rounded-2xl active:bg-indigo-50 active:border-indigo-200 text-left transition-colors">
-      <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600">
+    <button onClick={onClick} className="flex items-center gap-4 p-4 border border-slate-100 rounded-2xl active:bg-slate-50 text-left transition-all shadow-sm">
+      <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl ${color}`}>
         <i className={`fa-solid ${icon}`}></i>
       </div>
       <span className="font-bold text-slate-700">{label}</span>

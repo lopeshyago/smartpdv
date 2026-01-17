@@ -1,41 +1,22 @@
-# ESTÁGIO 1: Build do Frontend (React + Vite)
-FROM node:20-alpine AS build-stage
-
+# Estágio 1: Build do Frontend
+FROM node:20-slim AS build
 WORKDIR /app
-
-# Copia arquivos de configuração de pacotes
 COPY package*.json ./
-
-# Instala todas as dependências (incluindo as de desenvolvimento para o build)
 RUN npm install
-
-# Copia o restante do código do projeto
 COPY . .
-
-# Executa o build do Vite (gera a pasta /dist)
 RUN npm run build
 
-# ESTÁGIO 2: Runtime (Servidor Node.js + Express)
-FROM node:20-alpine AS runtime-stage
-
+# Estágio 2: Execução do Servidor
+FROM node:20-slim
 WORKDIR /app
-
-# Copia apenas os arquivos necessários para o servidor rodar
 COPY package*.json ./
 RUN npm install --production
-
-# Copia o servidor Express
+# Copia o build do frontend do estágio anterior
+COPY --from=build /app/dist ./dist
+# Copia o servidor backend
 COPY server.js ./
+# Copia os tipos para o node processar se necessário (opcional para o server.js)
+COPY types.ts ./
 
-# Copia a pasta 'dist' gerada no estágio anterior
-COPY --from=build-stage /app/dist ./dist
-
-# Expõe a porta 3000 (configurada no seu server.js)
 EXPOSE 3000
-
-# Variáveis de ambiente padrão
-ENV NODE_ENV=production
-ENV PORT=3000
-
-# Comando para iniciar a aplicação
-CMD ["node", "server.js"]
+CMD ["npm", "start"]

@@ -1,7 +1,12 @@
-const express = require('express');
-const { Pool } = require('pg');
-const path = require('path');
-const cors = require('cors');
+import express from 'express';
+import pkg from 'pg';
+const { Pool } = pkg;
+import path from 'path';
+import { fileURLToPath } from 'url';
+import cors from 'cors';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 app.use(express.json());
@@ -16,7 +21,6 @@ const pool = new Pool({
 
 const initDb = async () => {
   try {
-    // Teste de conexão
     await pool.query('SELECT NOW()');
     console.log('Connected to PostgreSQL successfully');
 
@@ -58,7 +62,6 @@ const initDb = async () => {
 };
 initDb();
 
-// Rotas da API
 app.get('/api/users', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM users ORDER BY name');
@@ -140,10 +143,8 @@ app.post('/api/sales', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Middleware para servir arquivos estáticos
 app.use(express.static(path.join(__dirname, 'dist')));
 
-// Redireciona todas as outras rotas para o index.html (SPA)
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });

@@ -3,16 +3,17 @@
 @tailwind utilities;
 
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
 body {
   margin: 0;
-  min-width: 320px;
-  min-height: 100vh;
-  display: block;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-#root {
-  width: 100%;
+/* Prevenção de seleção de texto em botões para parecer nativo mobile */
+button {
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }

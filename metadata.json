@@ -1,0 +1,5 @@
+{
+  "name": "Smart PDV",
+  "description": "A high-performance point-of-sale system optimized for mobile devices, featuring table management, direct sales, product CRUD, and financial dashboards.",
+  "requestFramePermissions": []
+}
